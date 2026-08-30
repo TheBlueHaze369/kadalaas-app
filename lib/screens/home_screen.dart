@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Home screen — shown right after the splash screen.
-/// Greets the user, offers a primary "Add a new note" action,
-/// and three entry points: Lazy Mode, To-Do List, Ideas.
+import '../widgets/feature_icons.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,41 +12,39 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final AnimationController _entrance;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _entrance = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1250),
     )..forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _entrance.dispose();
     super.dispose();
   }
 
-  /// Builds a staggered fade + slide-up animation for element [index].
-  /// Each element starts slightly after the previous one, giving the
-  /// screen a smooth, cascading entrance instead of popping in at once.
-  Widget _staggered({required int index, required Widget child}) {
-    final start = (index * 0.12).clamp(0.0, 1.0);
-    final end = (start + 0.5).clamp(0.0, 1.0);
+  Widget _reveal({required int index, required Widget child}) {
+    final start = (index * 0.10).clamp(0.0, 0.55);
+    final end = (start + 0.42).clamp(0.0, 1.0);
     final animation = CurvedAnimation(
-      parent: _controller,
+      parent: _entrance,
       curve: Interval(start, end, curve: Curves.easeOutCubic),
     );
 
     return AnimatedBuilder(
       animation: animation,
-      builder: (context, _) {
+      builder: (context, child) {
+        final t = animation.value;
         return Opacity(
-          opacity: animation.value,
+          opacity: t,
           child: Transform.translate(
-            offset: Offset(0, (1 - animation.value) * 16),
+            offset: Offset(0, (1 - t) * 22),
             child: child,
           ),
         );
@@ -57,15 +54,33 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _onAddNote() {
-    // TODO: wire up navigation to the "new note" flow.
+    // TODO: new note flow
   }
 
   void _onCardTap(String label) {
-    // TODO: wire up navigation for Lazy Mode / To-Do List / Ideas.
+    // TODO: Lazy Mode / To-Do List / Ideas
   }
 
   @override
   Widget build(BuildContext context) {
+    final englishHeadline = GoogleFonts.moderustic(
+      fontSize: 26,
+      height: 1.28,
+      fontWeight: FontWeight.w700,
+      color: Colors.black,
+    );
+    final malayalamHeadline = GoogleFonts.notoSansMalayalam(
+      fontSize: 26,
+      height: 1.28,
+      fontWeight: FontWeight.w700,
+      color: Colors.black,
+    );
+    final muted = GoogleFonts.moderustic(
+      fontSize: 13,
+      color: const Color(0xFFBDBDBD),
+      height: 1.35,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -74,152 +89,110 @@ class _HomeScreenState extends State<HomeScreen>
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
+            icon: const Icon(Icons.more_vert, color: Colors.black, size: 22),
             onPressed: () {},
           ),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = (constraints.maxWidth - 48 - 16) / 2;
 
-              // Greeting — Malayalam app name stays on the system font
-              // (Moderustic has no Malayalam glyphs); the English part
-              // uses Moderustic.
-              _staggered(
-                index: 0,
-                child: RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.moderustic(
-                      fontSize: 22,
-                      color: Colors.black,
-                      height: 1.3,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    children: [
-                      const TextSpan(
-                        text: 'കടലാസ്',
-                        style: TextStyle(
-                          fontFamily:
-                              null, // system font, keeps Malayalam glyphs
-                          fontWeight: FontWeight.w700,
-                          fontSize: 22,
-                        ),
-                      ),
-                      TextSpan(
-                        text: ' is yours.\nWhat do you wanna scribble today?',
-                        style: GoogleFonts.moderustic(
-                          fontSize: 22,
-                          color: Colors.black,
-                          height: 1.3,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Add a new note button
-              _staggered(
-                index: 1,
-                child: Center(child: _AddNoteButton(onTap: _onAddNote)),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Top row: Lazy Mode + To-Do List
-              _staggered(
-                index: 2,
-                child: Row(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _FeatureCard(
-                        icon: Icons.self_improvement,
-                        title: 'Lazy Mode',
-                        subtitle: 'Record simple voice journals, no stress.',
-                        onTap: () => _onCardTap('Lazy Mode'),
+                    _reveal(
+                      index: 0,
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(text: 'കടലാസ്', style: malayalamHeadline),
+                            TextSpan(
+                              text: ' is yours.\nWhat do you wanna scribble today?',
+                              style: englishHeadline,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _FeatureCard(
-                        icon: Icons.checklist_rounded,
-                        title: 'To-Do List',
-                        subtitle: 'Catch up with your tasks. Never miss any!',
-                        onTap: () => _onCardTap('To-Do List'),
+                    const SizedBox(height: 28),
+                    _reveal(
+                      index: 1,
+                      child: Center(
+                        child: _AddNoteButton(onTap: _onAddNote),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _reveal(
+                      index: 2,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _FeatureCard(
+                              icon: const SittingPersonIcon(size: 30),
+                              title: 'Lazy Mode',
+                              subtitle: 'Record simple voice journals, no stress.',
+                              onTap: () => _onCardTap('Lazy Mode'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _FeatureCard(
+                              icon: const ChecklistIcon(size: 30),
+                              title: 'To-Do List',
+                              subtitle: 'Catch up with your tasks. Never miss any!',
+                              onTap: () => _onCardTap('To-Do List'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _reveal(
+                      index: 3,
+                      child: Center(
+                        child: SizedBox(
+                          width: cardWidth,
+                          child: _FeatureCard(
+                            icon: const IdeaHeadIcon(size: 30),
+                            title: 'Ideas',
+                            subtitle: 'New idea popped up? Drop it here!',
+                            onTap: () => _onCardTap('Ideas'),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    _reveal(
+                      index: 4,
+                      child: Center(
+                        child: Text(
+                          'Wondering why kadalaas looks dead?\nGet those things done first gang!',
+                          textAlign: TextAlign.center,
+                          style: muted,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 14),
-
-              // Ideas card, centered, half width
-              _staggered(
-                index: 3,
-                child: Center(
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width / 2 - 28,
-                    child: _FeatureCard(
-                      icon: Icons.emoji_objects_outlined,
-                      title: 'Ideas',
-                      subtitle: 'New idea popped up? Drop it here!',
-                      onTap: () => _onCardTap('Ideas'),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // Bottom hint text
-              _staggered(
-                index: 4,
-                child: Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        'Wondering why kadalaas looks dead?',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.moderustic(
-                          color: Colors.grey.shade400,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        'Get those things done first gang!',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.moderustic(
-                          color: Colors.grey.shade400,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-/// Black pill-shaped "+ Add a new note" button with a gentle
-/// press-down scale animation for tactile feedback.
 class _AddNoteButton extends StatefulWidget {
   const _AddNoteButton({required this.onTap});
+
   final VoidCallback onTap;
 
   @override
@@ -227,28 +200,32 @@ class _AddNoteButton extends StatefulWidget {
 }
 
 class _AddNoteButtonState extends State<_AddNoteButton> {
-  double _scale = 1.0;
-
-  void _setPressed(bool pressed) {
-    setState(() => _scale = pressed ? 0.96 : 1.0);
-  }
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       onTap: widget.onTap,
       child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
+        scale: _pressed ? 0.96 : 1,
+        duration: const Duration(milliseconds: 140),
         curve: Curves.easeOut,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 15),
           decoration: BoxDecoration(
             color: Colors.black,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: _pressed ? 0.04 : 0.12),
+                blurRadius: _pressed ? 6 : 16,
+                offset: Offset(0, _pressed ? 2 : 8),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -271,8 +248,6 @@ class _AddNoteButtonState extends State<_AddNoteButton> {
   }
 }
 
-/// A rounded feature card (Lazy Mode / To-Do List / Ideas) with
-/// icon, title, subtitle, and a subtle press animation + shadow.
 class _FeatureCard extends StatefulWidget {
   const _FeatureCard({
     required this.icon,
@@ -281,7 +256,7 @@ class _FeatureCard extends StatefulWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -291,45 +266,43 @@ class _FeatureCard extends StatefulWidget {
 }
 
 class _FeatureCardState extends State<_FeatureCard> {
-  double _scale = 1.0;
-
-  void _setPressed(bool pressed) {
-    setState(() => _scale = pressed ? 0.97 : 1.0);
-  }
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _setPressed(true),
-      onTapUp: (_) => _setPressed(false),
-      onTapCancel: () => _setPressed(false),
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       onTap: widget.onTap,
       child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 120),
+        scale: _pressed ? 0.97 : 1,
+        duration: const Duration(milliseconds: 140),
         curve: Curves.easeOut,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                color: Colors.black.withValues(alpha: _pressed ? 0.05 : 0.08),
+                blurRadius: _pressed ? 10 : 22,
+                offset: Offset(0, _pressed ? 4 : 10),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(widget.icon, size: 22, color: Colors.black),
-              const SizedBox(height: 14),
+              widget.icon,
+              const SizedBox(height: 16),
               Text(
                 widget.title,
                 style: GoogleFonts.moderustic(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                 ),
@@ -339,8 +312,8 @@ class _FeatureCardState extends State<_FeatureCard> {
                 widget.subtitle,
                 style: GoogleFonts.moderustic(
                   fontSize: 12,
-                  color: Colors.grey.shade500,
-                  height: 1.3,
+                  height: 1.35,
+                  color: const Color(0xFF9E9E9E),
                 ),
               ),
             ],
